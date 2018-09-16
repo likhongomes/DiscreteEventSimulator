@@ -82,7 +82,7 @@ public:
       Node current = head;
       cout << current->data->time << " ";
       while(current->next != NULL){
-        current = head->next;
+        current = current->next;
         cout << current->data->time << " " << endl;
       }
     } else {
