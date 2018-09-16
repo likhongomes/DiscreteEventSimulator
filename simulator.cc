@@ -3,11 +3,22 @@
 using namespace std;
 
 
-template <class T>
+class Event{
+public:
+  Event(int time, int jobSequenceNumber, string eventType){
+    this->time = time;
+    this->jobSequenceNumber = jobSequenceNumber;
+    this->eventType = eventType;
+  }
+  int time;
+  int jobSequenceNumber;
+  string eventType;
+};
+
 class Queue{
 private:
   typedef struct node{
-    T data;
+    Event *data;
     node *next;
   } *Node;
 
@@ -22,7 +33,7 @@ public:
     temporary = NULL;
   }
 
-  void push(T element){
+  void push(Event *element){
     Node newNode = new node;
     newNode->next = NULL;
     newNode->data = element;
@@ -40,16 +51,17 @@ public:
     }
   }
 
-  T pop(){
-    T toBeReturned;
+  Event pop(){
+    Event *toBeReturned;
     if (head != NULL) {
       toBeReturned = head->data;
       if(head->next != NULL){
         head = head->next;
       }
-      return toBeReturned;
+      return *toBeReturned;
     } else {
-      return 0;
+      toBeReturned = NULL;
+      return *toBeReturned;
     }
   }
 
@@ -68,58 +80,35 @@ public:
     cout << "The printed Que is ";
     if (head != NULL) {
       Node current = head;
-      cout << current->data << " ";
+      cout << current->data->time << " ";
       while(current->next != NULL){
         current = head->next;
-        cout << current->data << " " << endl;
+        cout << current->data->time << " " << endl;
       }
     } else {
       cout << "it's empty"<< endl;
     }
   }
-
-  void priortizeQ(){
-    current = head;
-    temporary = head->next;
-    if (current->data > temporary->data) {
-      std::cout << "it's bigger" << '\n';
-    } else {
-      cout << "it's not bigger" << endl;
-    }
-  }
-
-};
-
-struct Event{
-public:
-  Event(int time, int jobSequenceNumber, string eventType){
-    time = this->time;
-    jobSequenceNumber = this->jobSequenceNumber;
-    eventType = this->eventType;
-  }
-private:
-  int time;
-  int jobSequenceNumber;
-  string eventType;
 };
 
 int main(){
-  Queue<double> q;
-  Event *newEvent = new Event(10,22,"afadf");
-  //q.push(newEvent);
-  //Event *newEvent = new Event(10,22,"afadf");
-
-
+  Queue q;
+  Event *newEvent = new Event(0,22,"afadf");
+  q.push(newEvent);
+  Event *newEvent1 = new Event(20,22,"afadf");
+  q.push(newEvent1);
+  Event *newEvent2 = new Event(300,22,"afadf");
+  //q.push(newEvent2);
 
   //q.push();
   q.printQ();
-  q.priortizeQ();
+  //q.priortizeQ();
 
-  /*
-  cout <<  "The Verdict " <<q.isempty() << endl;
+
+  //cout <<  "The Verdict " <<q.isempty() << endl;
   cout << "The size is "<<q.size << endl;
-  cout << "popping " << q.pop() << endl;
-  cout << "popping " << q.pop() << endl;
-  std::cout << "is full " << q.isfull() << endl;
-  */
+  //cout << "popping " << q.pop() << endl;
+  //cout << "popping " << q.pop() << endl;
+  //std::cout << "is full " << q.isfull() << endl;
+
 }
