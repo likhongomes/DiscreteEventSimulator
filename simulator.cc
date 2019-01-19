@@ -57,6 +57,7 @@ public:
       toBeReturned = head->data;
       if(head->next != NULL){
         head = head->next;
+        size--;
       }
       return *toBeReturned;
     } else {
@@ -92,23 +93,35 @@ public:
 };
 
 int main(){
+
+  Queue cpuQ;
+  Queue disk1Q;
+  Queue disk2Q;
+
+
+
+
+
+
   Queue q;
   Event *newEvent = new Event(0,22,"afadf");
   q.push(newEvent);
   Event *newEvent1 = new Event(20,22,"afadf");
   q.push(newEvent1);
   Event *newEvent2 = new Event(300,22,"afadf");
-  //q.push(newEvent2);
+  q.push(newEvent2);
 
   //q.push();
   q.printQ();
   //q.priortizeQ();
-
+  q.pop();
 
   //cout <<  "The Verdict " <<q.isempty() << endl;
   cout << "The size is "<<q.size << endl;
   //cout << "popping " << q.pop() << endl;
   //cout << "popping " << q.pop() << endl;
   //std::cout << "is full " << q.isfull() << endl;
+
+  cout << "Done Executing" << endl;
 
 }
