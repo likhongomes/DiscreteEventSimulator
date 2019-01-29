@@ -15,7 +15,7 @@ int DISK1_MAX = 6;
 int DISK2_MIN = 3;
 int DISK2_MAX = 7;
 
-bool debugModeOn = true;
+bool debugModeOn = false;
 
 bool cpuIdleState = true;
 
@@ -174,50 +174,41 @@ public:
 
   void task(Queue *cpuQ, int tick, Queue *disk1Q, Queue *disk2Q, vector<Event> *priorityQ){
 
-    cout << "campating real time " << tick << " with wait time " << processTime << endl;
+    //cout << "campating real time " << tick << " with wait time " << processTime << endl;
     if (debugModeOn) {cout << "size of cpuQ = "<<cpuQ->size << endl;}
 
     if (idleState) {
-
-////////////
       if (cpuQ->isempty()) {
         idleState = true;
         cout << "que is empty" << endl;
       } else {
-        //cout << "Invoked jjjjjjjjjjjjjjjjj" << endl;
         idleState = false;
-        Event processEvent = cpuQ->pop();
+        Event processEvent = cpuQ->pop(); // Event to be processed
         jobSequenceNumber = processEvent.jobSequenceNumber;
-        //if(debugModeOn){cout << "Old Process Time " << processEvent.time <<" " << time << " "<< endl;}
         processTime = rand()%CPU_MAX-CPU_MIN + CPU_MAX+ processEvent.time;
-        //if(debugModeOn){cout << "New Process time " << processEvent.time << endl;}
+        if(debugModeOn){cout << "New Process time " << processEvent.time << endl;} //debugging statement
         int probability = rand()%10+1;
 
-
-        Event eventToBeLoaded = Event(processTime,jobSequenceNumber,eventType);
-        cout <<  "CPU Event " << eventToBeLoaded.time <<" " << eventToBeLoaded.jobSequenceNumber << endl;
 
         if (probability%QUIT_PROB) {
           eventType = 6;
         } else {
+          Event eventToBeLoaded = Event(processTime,jobSequenceNumber,eventType);
+          cout <<  "CPU Event " << eventToBeLoaded.time <<" " << eventToBeLoaded.jobSequenceNumber << endl;
           eventType = 3;
           if (disk1Q->size < disk2Q->size) {
             disk1Q->push(&eventToBeLoaded);
           } else {
             disk2Q->push(&eventToBeLoaded);
           }
+          priorityQ->push_back(eventToBeLoaded);
         }
-        priorityQ->push_back(eventToBeLoaded);
-        printLog(eventToBeLoaded);
-      //  if(debugModeOn){cout << "Process Time " << processTime << endl;}
+                if(debugModeOn){cout << "Process Time " << processTime << endl;} // Debugging statement
       }
-      //if(debugModeOn){cout << "CPU IS BUSY" << endl;}
+              if(debugModeOn){cout << "CPU IS BUSY" << endl;}
     } else {
-      //if(debugModeOn){cout << "checking " << tick << " " << processTime << endl;}
       if (tick == processTime) {
         cout << "Job completed " << endl;
-      //  if(debugModeOn){cout << "CPU UNlocked" << endl;}
-
         idleState = true;
       }
     }
@@ -230,17 +221,17 @@ public:
 };
 
 class Disk{
-private:
-  int time;
-  int eventType;
-  int toBeEventType;
-  int jobSequenceNumber;
-  bool idleState = true;
-  int waitTime;
-  int processTime = 1;
-  int DISK_MAX;
-  int DISK_MIN;
-  Event *processEvent = new Event(0,0,0);
+  private:
+    int time;
+    int eventType;
+    int toBeEventType;
+    int jobSequenceNumber;
+    bool idleState = true;
+    int waitTime;
+    int processTime = 1;
+    int DISK_MAX;
+    int DISK_MIN;
+    Event *processEvent = new Event(0,0,0);
 
 public:
   Disk(int DISK_MAX, int DISK_MIN,int toBeEventType){
@@ -250,28 +241,20 @@ public:
   };
 
   void task(int tick, Queue *diskQ, vector<Event> *priorityQ){
-  //  if (debugModeOn) {cout << "size of cpuQ = "<<diskQ->size << endl;}
     if (idleState) {
-
       if (diskQ->isempty()) {
         idleState = true;
-      //  if(debugModeOn){cout << "Diskque is empty" << endl;
       } else {
-        //if(debugModeOn){cout << "Invoked jjjjjjjjjjjjjjjjj" << endl;}
         idleState = false;
         Event processEvent = diskQ->pop();
         jobSequenceNumber = processEvent.jobSequenceNumber;
-  //      if(debugModeOn){cout << "Old Process Time " << processEvent.time <<" " << time << " "<< endl;}
         processTime = rand()%DISK_MAX-DISK_MIN + DISK_MAX+ processEvent.time;
         //processEvent.time = processTime;
-    //    if(debugModeOn){cout << "New Process time " << processEvent.time << endl;}
-
         Event eventToBeLoaded = Event(processTime,jobSequenceNumber,eventType);
         cout <<  "CPU Event " << eventToBeLoaded.time <<" " << eventToBeLoaded.jobSequenceNumber << endl;
         priorityQ->push_back(eventToBeLoaded);
         cout << "Process Time " << processTime << endl;
       }
-      //cout << "CPU IS BUSY" << endl;
     } else {
       cout << "checking " << tick << " " << processTime << endl;
       if (tick == processTime) {
@@ -281,6 +264,122 @@ public:
     }
   }
 };
+
+
+
+
+
+
+class PriorityQueue{
+private:
+  typedef struct node{
+    Event *data;
+    node *next;
+  } *Node;
+
+  Node head;
+  Node current;
+  Node temporary;
+  Node tail;
+public:
+  int size = 0;
+  PriorityQueue(){
+    head = NULL;
+    current = NULL;
+    temporary = NULL;
+    tail = NULL;
+  }
+
+  //pushing the Event in Queue
+  void push(Event *element){
+    Node newNode = new node;
+    newNode->next = NULL;
+    newNode->data = element;
+
+    if(head == NULL){
+      head = newNode;
+      //tail = head;
+      size++;
+    } else {
+      current = head;
+      
+
+
+      
+      while(current->next != NULL){
+        if(newNode->data->time < current->data->time){
+          Node tempNode = current;
+          current = newNode;
+          newNode->next = current;
+          return;
+        } else {
+          current = current->next;
+        }
+      }
+      //current->next = newNode;
+      //tail = current->next;
+      size++;
+    }
+  }
+
+
+  Event pop(){
+    Event *toBeReturned;
+    if (head != NULL) {
+      toBeReturned = head->data;
+      if (size >0) {
+        size--;
+      }
+
+      if(head->next != NULL || head != NULL){
+        head = head->next;
+      }
+      return *toBeReturned;
+    } else {
+      toBeReturned = NULL;
+      return *toBeReturned;
+    }
+  }
+
+  bool isempty(){
+    if(head == NULL){
+      return true;
+    } else return false;
+  }
+  bool isfull(){
+    if (head != NULL) {
+      return true;
+    } else return false;
+  }
+
+  void printQ(){
+    cout << "The printed Que is ";
+    if (head != NULL) {
+      Node current = head;
+      cout << current->data->time << " ";
+      while(current->next != NULL){
+        current = current->next;
+        cout << current->data->time << " ";
+      }
+    } else {
+      cout << "it's empty"<< endl;
+    }
+    cout << endl;
+  }
+
+  Event begin(){
+    return *head->data;
+  }
+
+  Event end(){
+    return *tail->data;
+  }
+
+
+};
+
+
+
 
 
 
@@ -306,14 +405,12 @@ int main(){
 
   Event *event = new Event(0,0,0);
 
-
+  //The main loop where the program runs until there is job in the queue.
   int tick = INIT_TIME;
-  while(!priorityQ.empty() && tick < FIN_TIME){
 
-
+  /*
+  while(!priorityQ.empty()  ){
     int jobCreationTime = rand()%ARRIVE_MAX-ARRIVE_MIN + ARRIVE_MIN + tick;
-
-
     Event *newEvent = new Event(jobCreationTime,tick+1,1);
     priorityQ.push_back(*newEvent);
 
@@ -339,18 +436,19 @@ int main(){
     disk2->task(tick, &disk1Q, &priorityQ);
 
     printLog(*event);
-
-//    if(debugModeOn){cout << "clock " << tick << endl;}
-
-    cout << "Clock "<< tick << " " << endl;
     tick++;
-  }
-  cout << tick << endl;
-  cout << "cpuQ " << cpuQ.size << endl;
+  }*/
 
-
-
-  cout << "disk 1 size = " << disk1Q.size << endl;
-  cout << "disk 2 size = " << disk2Q.size << endl;
-
+  PriorityQueue *pq = new PriorityQueue();
+  Event *event4 = new Event(1,1,1);
+  Event *event5 = new Event(2,2,1);
+  Event *event6 = new Event(3,3,1);
+  pq->push(event4);
+  pq->push(event5);
+  pq->push(event6);
+  pq->printQ();
 }
+
+
+
+

@@ -15,7 +15,7 @@ int DISK1_MAX = 6;
 int DISK2_MIN = 3;
 int DISK2_MAX = 7;
 
-bool debugModeOn = true;
+bool debugModeOn = false;
 
 bool cpuIdleState = true;
 
@@ -174,7 +174,7 @@ public:
 
   void task(Queue *cpuQ, int tick, Queue *disk1Q, Queue *disk2Q, vector<Event> *priorityQ){
 
-    cout << "campating real time " << tick << " with wait time " << processTime << endl;
+    if(debugModeOn){cout << "campating real time " << tick << " with wait time " << processTime << endl;}
     if (debugModeOn) {cout << "size of cpuQ = "<<cpuQ->size << endl;}
 
     if (idleState) {
@@ -195,7 +195,7 @@ public:
 
 
         Event eventToBeLoaded = Event(processTime,jobSequenceNumber,eventType);
-        cout <<  "CPU Event " << eventToBeLoaded.time <<" " << eventToBeLoaded.jobSequenceNumber << endl;
+        if(debugModeOn){cout <<  "CPU Event " << eventToBeLoaded.time <<" " << eventToBeLoaded.jobSequenceNumber << endl;}
 
         if (probability%QUIT_PROB) {
           eventType = 6;
@@ -320,19 +320,8 @@ int main(){
     event = &priorityQ[0];
     priorityQ.erase(priorityQ.begin());
 
-
-
-
-
-    //std::sort(priorityQ.begin(),priorityQ.end(),[ ]( const Event& lhs, const Event& rhs){
-      //return lhs.time < rhs.time;
-
-    //});
-
-    //if (event->eventType == 1) {
       cpuQ.push(event);
-      //cout << "Process <<<<< " << event->time << " " << event->jobSequenceNumber << " " << event->eventType << endl;
-    //}
+   
 
     cpu->task(&cpuQ, tick, &disk1Q, &disk2Q, &priorityQ);
     disk1->task(tick, &disk1Q, &priorityQ);
@@ -340,9 +329,7 @@ int main(){
 
     printLog(*event);
 
-//    if(debugModeOn){cout << "clock " << tick << endl;}
-
-    cout << "Clock "<< tick << " " << endl;
+    if(debugModeOn){cout << "Clock "<< tick << " " << endl;}
     tick++;
   }
   cout << tick << endl;
