@@ -154,24 +154,25 @@ public:
   CPU(){};
 
   void task(Queue *cpuQ, int tick, Queue *disk1Q, Queue *disk2Q, vector<Event> *priorityQ){
-
+    bool pDebug = true;
     if (idleState) { //if idle is true
+    if(pDebug) cout << "CPU is in idle state" << endl;
       if (cpuQ->isempty()) { //if the cpuQ is empty
         idleState = true;
-        cout << "que is empty" << endl;
+        if(pDebug)cout << "que is empty" << endl;
         return;
       } else { //if cpuQ is not empty
-        cout << "cpu is processing" << endl;
+        
         idleState = false; //set the process to busy
         Event processEvent = cpuQ->pop();
         jobSequenceNumber = processEvent.jobSequenceNumber;
         processTime = rand()%CPU_MAX-CPU_MIN + CPU_MAX+ processEvent.time;
-        
+        if(pDebug)cout << "cpu is processing" << " time " << cpuClock << " New process time: " << processTime << endl;
         //printLog(eventToBeLoaded);
       }
     } else { // if cpu is busy
       if (cpuClock == processTime) {
-
+        if(pDebug) cout << processTime << " " << processTime << endl;
         int probability = rand()%10+1;
         Event eventToBeLoaded = Event(processTime,jobSequenceNumber,2);
         priorityQ->push_back(eventToBeLoaded);
