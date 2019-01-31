@@ -179,6 +179,7 @@ public:
         idleState = true;
         cout << "que is empty" << endl;
       } else { //if cpuQ is not empty
+        cout << "cpu is processing" << endl;
         idleState = false; //set the process to busy
         Event processEvent = cpuQ->pop();
         jobSequenceNumber = processEvent.jobSequenceNumber;
@@ -285,39 +286,40 @@ int main(){
   Disk *disk1 = new Disk(DISK1_MAX,DISK1_MIN, 4);
   Disk *disk2 = new Disk(DISK2_MAX,DISK2_MIN, 5);
   //Creating first 
-  Event *event1 = new Event(6,6,1);
+  Event *event1 = new Event(1,6,1);
   Event *event2 = new Event(2,2,1);
   Event *event3 = new Event(3,3,1);
   Event *event4 = new Event(4, 4, 1);
   Event *event5 = new Event(5, 5, 1);
+  Event *event6 = new Event(6, 6, 1);
   //loading events to priorityQ
   priorityQ.push_back(*event1);
   priorityQ.push_back(*event2);
   priorityQ.push_back(*event3);
   priorityQ.push_back(*event4);
   priorityQ.push_back(*event5);
-  //loading events to cpuQ
-  cpuQ.push(event1);
-  cpuQ.push(event2);
-  cpuQ.push(event3);
-  cpuQ.push(event4);
-  cpuQ.push(event5);
-  
+  priorityQ.push_back(*event6);
+
   Event *event = new Event(0, 0, 0);
 
   int tick = INIT_TIME; //simulation clock
   while(!priorityQ.empty() && tick < FIN_TIME){
     //measuring the job creating time randomly
     int jobCreationTime = rand()%ARRIVE_MAX-ARRIVE_MIN + ARRIVE_MIN + tick;
-    /*
+    
     //Creating a new event and then pushing it to the queue
     Event *newEvent = new Event(jobCreationTime,tick+1,1);
     priorityQ.push_back(*newEvent);
-    */
+    
     //popping the first element from the queue
-    event = &priorityQ[0];
+    event = &priorityQ.front();
     priorityQ.erase(priorityQ.begin());
     
+    if(event->eventType ==1){ //job created, send it to CPU
+      cpuQ.push(event);
+    } else if(event->eventType == 2){
+      //push to diskQ
+    }
     //pushing it to the cpuQ
     //cpuQ.push(newEvent);
 
