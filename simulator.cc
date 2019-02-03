@@ -4,7 +4,7 @@
 #include <vector>
 
 int INIT_TIME = 0;
-int FIN_TIME = 1000;
+int FIN_TIME = 100;
 int ARRIVE_MIN = 5;
 int ARRIVE_MAX = 30;
 int QUIT_PROB = 5;
@@ -174,11 +174,15 @@ public:
       if (cpuClock == processTime) {
         if(pDebug) cout << processTime << " " << processTime << endl;
         int probability = rand()%10+1;
-        Event eventToBeLoaded = Event(processTime,jobSequenceNumber,2);
-        priorityQ->push_back(eventToBeLoaded);
 
+        Event eventToBeLoaded = Event(processTime,jobSequenceNumber,2);
+        cout << "Job COmpleted" << endl;
+        priorityQ->push_back(eventToBeLoaded);
+        /*
         if (probability%QUIT_PROB) { //calculating the probablity for the job to exit
-          eventType = 6;
+          Event eventToBeLoaded = Event(processTime,jobSequenceNumber,6);
+          priorityQ->push_back(eventToBeLoaded);
+          cout << "Job Exits" << endl;
         } else { //load the job to the diskQ
           eventType = 3;
           if (disk1Q->size < disk2Q->size) {
@@ -188,11 +192,12 @@ public:
           }
         }
         priorityQ->push_back(eventToBeLoaded);
-
+        */
 
 
         //Event completedJob = Event(tick+1,jobSequenceNumber,)
         cout << "Job completed " << endl;
+        cpuClock = 0;
         idleState = true;
       } else {
         cpuClock++;
@@ -257,6 +262,10 @@ public:
       }
     }
   }
+
+  void loadToDisk(){
+
+  }
 };
 
 
@@ -283,7 +292,9 @@ void printLog(Event element){
   }
 }
 
+void sendToDisk(Event *event, Disk *disk1, Disk *disk2){
 
+}
 
 int main(){
 
@@ -296,12 +307,12 @@ int main(){
   Disk *disk1 = new Disk(DISK1_MAX,DISK1_MIN, 4);
   Disk *disk2 = new Disk(DISK2_MAX,DISK2_MIN, 5);
   //Creating first 
-  Event *event1 = new Event(1,6,1);
+  Event *event1 = new Event(1,1,1);
   Event *event2 = new Event(2,2,1);
   Event *event3 = new Event(3,3,1);
-  Event *event4 = new Event(4, 4, 1);
-  Event *event5 = new Event(5, 5, 1);
-  Event *event6 = new Event(6, 6, 1);
+  Event *event4 = new Event(4,4,1);
+  Event *event5 = new Event(5,5,1);
+  Event *event6 = new Event(6,6,1);
   //loading events to priorityQ
   priorityQ.push_back(*event1);
   priorityQ.push_back(*event2);
@@ -310,8 +321,15 @@ int main(){
   priorityQ.push_back(*event5);
   priorityQ.push_back(*event6);
 
-  Event *event = new Event(0, 0, 0);
+  cpuQ.push(event1);
+  cpuQ.push(event2);
+  cpuQ.push(event3);
+  cpuQ.push(event4);
+  cpuQ.push(event5);
+  cpuQ.push(event6);
 
+  Event *event = new Event(0, 0, 0);
+  
   int tick = INIT_TIME; //simulation clock
   while(!priorityQ.empty() && tick < FIN_TIME){
     //measuring the job creating time randomly
@@ -326,18 +344,40 @@ int main(){
     priorityQ.erase(priorityQ.begin());
     printLog(*event);
     
+    /*
     if(event->eventType ==1){ //job created, send it to CPU
       cpuQ.push(event);
     } else if(event->eventType == 2){
       //push to diskQ
+    }*/
+
+  
+    switch (event->eventType){
+      case 1: // code to be executed if n = 1;
+        cpuQ.push(event);
+          break;
+      case 2: // code to be executed if n = 2;
+          cout << "I have been called" << endl;
+          sendToDisk(event, disk1, disk2);
+            break;
+      case 3: // code to be executed if n = 2;
+          break;
+      case 4: // code to be executed if n = 2;
+          break;
+      case 5: // code to be executed if n = 2;
+          break;
+      case 6: // code to be executed if n = 2;
+          break;
     }
+  
+
     //pushing it to the cpuQ
     //cpuQ.push(newEvent);
 
     //starting the task for CPU & the Disks
     cpu->task(&cpuQ, tick, &disk1Q, &disk2Q, &priorityQ);
-    //disk1->task(tick, &disk1Q, &priorityQ);
-    //disk2->task(tick, &disk1Q, &priorityQ);
+    disk1->task(tick, &disk1Q, &priorityQ);
+    disk2->task(tick, &disk1Q, &priorityQ);
     //printing the log
     
 
@@ -345,6 +385,11 @@ int main(){
     
     tick++; //incrementing the time of the clock
   }
+
+
+  
+  
+
   
   cout << "============= Stats ===============";
   cout << "list of items in cpuQ: " << cpuQ.size << endl;
