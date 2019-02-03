@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <vector>
+#include <fstream>
+#include <sstream>
+
 
 int INIT_TIME = 0;
 int FIN_TIME = 1000;
@@ -11,15 +14,35 @@ int QUIT_PROB = 5;
 int CPU_MIN = 3;
 int CPU_MAX = 5;
 int DISK1_MIN = 2;
+
 int DISK1_MAX = 6;
 int DISK2_MIN = 3;
 int DISK2_MAX = 7;
 
-
-
 bool cpuIdleState = true;
 
 using namespace std;
+std::vector<std::string> vec;
+
+void readFile(){
+
+  string output;
+  std::ifstream myfile;
+  myfile.open("configuration.txt");
+  if (myfile.is_open()){
+    while (getline(myfile, output)){
+      vec.push_back(output);
+    }
+  } else {
+    std::cout << "File not found" << std::endl;
+  }
+  cout << vec[0] << " " << vec[1] << endl;
+
+  myfile.close();
+  return;
+}
+
+
 
 
 class Event{
@@ -287,6 +310,8 @@ void printLog(Event element){
 
 int main(){
 
+  //readFile();
+
   srand(time(NULL));
   Queue cpuQ;
   Queue disk1Q;
@@ -344,12 +369,15 @@ int main(){
     
     
     tick++; //incrementing the time of the clock
+
+    
   }
   
+  /*
   cout << "============= Stats ===============";
   cout << "list of items in cpuQ: " << cpuQ.size << endl;
   cout << "List of items in diskQ1: " << disk1Q.size << endl;
   cout << "List of items in diskQ2: " << disk2Q.size << endl;
   cout << "List of items in priorityQ: " << priorityQ.size() << endl;
-
-}
+  */
+//}
