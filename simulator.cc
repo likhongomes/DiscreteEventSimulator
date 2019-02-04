@@ -7,7 +7,7 @@
 
 
 int INIT_TIME = 0;
-int FIN_TIME = 100;
+int FIN_TIME = 1000;
 int ARRIVE_MIN = 5;
 int ARRIVE_MAX = 30;
 int QUIT_PROB = 5;
@@ -166,7 +166,6 @@ public:
 
 class CPU{
 private:
-  int time;
   int eventType;
   int jobSequenceNumber;
   bool idleState = true;
@@ -177,6 +176,7 @@ public:
   CPU(){};
 
   void task(Queue *cpuQ, int tick, Queue *disk1Q, Queue *disk2Q, vector<Event> *priorityQ){
+
     bool pDebug = true;
     if (idleState) { //if idle is true
     if(pDebug) cout << "CPU is in idle state" << endl;
@@ -189,6 +189,7 @@ public:
         idleState = false; //set the process to busy
         Event processEvent = cpuQ->pop();
         jobSequenceNumber = processEvent.jobSequenceNumber;
+        cout << "Process event time " << processEvent.time << endl;
         processTime = rand()%CPU_MAX-CPU_MIN + CPU_MAX+ processEvent.time;
         if(pDebug)cout << "cpu is processing" << " time " << cpuClock << " New process time: " << processTime << endl;
         //printLog(eventToBeLoaded);
@@ -267,7 +268,8 @@ public:
         Event processEvent = diskQ->pop();
         jobSequenceNumber = processEvent.jobSequenceNumber;
   //      if(debugModeOn){cout << "Old Process Time " << processEvent.time <<" " << time << " "<< endl;}
-        processTime = rand()%DISK_MAX-DISK_MIN + DISK_MAX+ processEvent.time;
+        cout << processEvent.time << endl;
+        processTime = rand()%DISK_MAX-DISK_MIN + DISK_MAX;
         //processEvent.time = processTime;
     //    if(debugModeOn){cout << "New Process time " << processEvent.time << endl;}
 
@@ -361,8 +363,13 @@ int main(){
     int jobCreationTime = rand()%ARRIVE_MAX-ARRIVE_MIN + ARRIVE_MIN + tick;
     
     //Creating a new event and then pushing it to the queue
-    Event *newEvent = new Event(jobCreationTime,tick+1,1);
+    Event *newEvent = (Event*)malloc(sizeof(Event));
+    newEvent = new Event(jobCreationTime,tick+1,1);
+    //cout << jobCreationTime << endl
+    cout << "P time: " <<jobCreationTime << endl;
+    cout << "Process Time::::" << newEvent->time << endl;
     priorityQ.push_back(*newEvent);
+
     
     //popping the first element from the queue
     event = &priorityQ.front();
@@ -425,4 +432,4 @@ int main(){
   cout << "List of items in diskQ2: " << disk2Q.size << endl;
   cout << "List of items in priorityQ: " << priorityQ.size() << endl;
   */
-//}
+}
