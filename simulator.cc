@@ -177,7 +177,7 @@ public:
 
   void task(Queue *cpuQ, int tick, Queue *disk1Q, Queue *disk2Q, vector<Event> *priorityQ){
 
-    bool pDebug = true;
+    bool pDebug = false;
     if (idleState) { //if idle is true
     if(pDebug) cout << "CPU is in idle state" << endl;
       if (cpuQ->isempty()) { //if the cpuQ is empty
@@ -189,8 +189,8 @@ public:
         idleState = false; //set the process to busy
         Event processEvent = cpuQ->pop();
         jobSequenceNumber = processEvent.jobSequenceNumber;
-        cout << "Process event time " << processEvent.time << endl;
-        processTime = rand()%CPU_MAX-CPU_MIN + CPU_MAX+ processEvent.time;
+        //cout << "Process event time " << processEvent.time << endl;
+        processTime = rand()%CPU_MAX-CPU_MIN + CPU_MAX;
         if(pDebug)cout << "cpu is processing" << " time " << cpuClock << " New process time: " << processTime << endl;
         //printLog(eventToBeLoaded);
       }
@@ -199,8 +199,8 @@ public:
         if(pDebug) cout << processTime << " " << processTime << endl;
         int probability = rand()%10+1;
 
-        Event eventToBeLoaded = Event(processTime,jobSequenceNumber,2);
-        cout << "Job COmpleted" << endl;
+        Event eventToBeLoaded = Event(tick+1,jobSequenceNumber,2);
+        //cout << "Job COmpleted" << endl;
         priorityQ->push_back(eventToBeLoaded);
         /*
         if (probability%QUIT_PROB) { //calculating the probablity for the job to exit
@@ -220,7 +220,7 @@ public:
 
 
         //Event completedJob = Event(tick+1,jobSequenceNumber,)
-        cout << "Job completed " << endl;
+        //cout << "Job completed " << endl;
         cpuClock = 0;
         idleState = true;
       } else {
@@ -288,9 +288,6 @@ public:
     }
   }
 
-  void loadToDisk(){
-
-  }
 };
 
 
@@ -364,10 +361,13 @@ int main(){
     
     //Creating a new event and then pushing it to the queue
     Event *newEvent = (Event*)malloc(sizeof(Event));
-    newEvent = new Event(jobCreationTime,tick+1,1);
+    newEvent->eventType = 1;
+    newEvent->time = jobCreationTime;
+    newEvent->jobSequenceNumber = tick+1;
+    //newEvent = new Event(jobCreationTime,tick+1,1);
     //cout << jobCreationTime << endl
-    cout << "P time: " <<jobCreationTime << endl;
-    cout << "Process Time::::" << newEvent->time << endl;
+    //cout << "P time: " <<jobCreationTime << endl;
+    //cout << "Process Time::::" << newEvent->time << endl;
     priorityQ.push_back(*newEvent);
 
     
@@ -389,7 +389,7 @@ int main(){
         cpuQ.push(event);
           break;
       case 2: // code to be executed if n = 2;
-          cout << "I have been called" << endl;
+          //cout << "I have been called" << endl;
           sendToDisk(event, disk1, disk2);
             break;
       case 3: // code to be executed if n = 2;
