@@ -163,16 +163,22 @@ public:
 
 
 
-class CPU{
+class Component{
 private:
   int eventType;
   int jobSequenceNumber = 0;
   bool idleState = true;
   int cpuClock = 0;
   int processTime = 1;
+  int minTime;
+  int maxTime;
   Event *processEvent = new Event(0,0,0);
 public:
-  CPU(){};
+  Component(int minTime, int maxTime, int eventType){
+    this->minTime = minTime;
+    this->maxTime = maxTime;
+    this->eventType = eventType;
+  };
 
   void task(vector<Event> *cpuQ, int tick, Queue *disk1Q, Queue *disk2Q, vector<Event> *priorityQ){
 
@@ -190,7 +196,7 @@ public:
         cpuQ->erase(cpuQ->begin());
         jobSequenceNumber = processEvent.jobSequenceNumber;
         //cout << "Process event time " << processEvent.time << endl;
-        processTime = rand()%CPU_MAX-CPU_MIN + CPU_MAX;
+        processTime = rand()%maxTime-minTime + maxTime;
         if(pDebug)cout << "cpu is processing" << " time " << cpuClock << " New process time: " << processTime << endl;
         //printLog(eventToBeLoaded);
       }
@@ -199,32 +205,10 @@ public:
         if(pDebug) cout << processTime << " " << processTime << endl;
         int probability = rand()%10+1;
         Event *eventToBeLoaded = (Event*)malloc(sizeof(Event));
-        eventToBeLoaded->eventType = 2;
+        eventToBeLoaded->eventType = eventType;
         eventToBeLoaded->time = tick+1;
         eventToBeLoaded->jobSequenceNumber = jobSequenceNumber;
-
-        //vent eventToBeLoaded = Event(tick+1,jobSequenceNumber,2);
-        //cout << "Job COmpleted" << endl;
         priorityQ->push_back(*eventToBeLoaded);
-        /*
-        if (probability%QUIT_PROB) { //calculating the probablity for the job to exit
-          Event eventToBeLoaded = Event(processTime,jobSequenceNumber,6);
-          priorityQ->push_back(eventToBeLoaded);
-          cout << "Job Exits" << endl;
-        } else { //load the job to the diskQ
-          eventType = 3;
-          if (disk1Q->size < disk2Q->size) {
-            disk1Q->push(&eventToBeLoaded);
-          } else {
-            disk2Q->push(&eventToBeLoaded);
-          }
-        }
-        priorityQ->push_back(eventToBeLoaded);
-        */
-
-
-        //Event completedJob = Event(tick+1,jobSequenceNumber,)
-        //cout << "Job completed " << endl;
         cpuClock = 0;
         idleState = true;
       } else {
@@ -338,6 +322,10 @@ void sendToDisk(Event *event, vector<Event> *diskQ1, vector<Event> *diskQ2){
     diskQ2->push_back(*event);
 }
 
+
+
+
+
 int main(){
 
   //readFile();
@@ -346,13 +334,15 @@ int main(){
   Queue cpuQ;
   Queue disk1Q;
   Queue disk2Q;
+
   vector<Event> priorityQ;
   vector<Event> cpuq;
   vector<Event> diskQ1;
   vector<Event> diskQ2;
-  CPU *cpu = new CPU;
-  Disk *disk1 = new Disk(DISK1_MAX,DISK1_MIN, 4);
-  Disk *disk2 = new Disk(DISK2_MAX,DISK2_MIN, 5);
+  Component *cpu = new Component(CPU_MIN, CPU_MAX, 2);
+  Component *disk1 = new Component(DISK1_MIN,DISK1_MAX, 4);
+  Component *disk2 = new Component(DISK2_MIN, DISK2_MAX, 5);
+
   //Creating first 
   Event *event1 = new Event(1,1,1);
   Event *event2 = new Event(2,2,1);
@@ -376,27 +366,17 @@ int main(){
     newEvent->eventType = 1;
     newEvent->time = jobCreationTime;
     newEvent->jobSequenceNumber = tick+1;
-    //newEvent = new Event(jobCreationTime,tick+1,1);
-    //cout << jobCreationTime << endl
-    //cout << "P time: " <<jobCreationTime << endl;
-    //cout << "Process Time::::" << newEvent->time << endl;
+
     priorityQ.push_back(*newEvent);
-    //cpuQ.push(newEvent);
-    
-    //popping the first element from the queue
+
+    std::sort(priorityQ.begin(),priorityQ.end(),[ ]( const Event& lhs, const Event& rhs){
+      return lhs.time < rhs.time;
+
+    });
+
     Event *event = &priorityQ.front();
     priorityQ.erase(priorityQ.begin());
     printLog(*event);
-    //cout << "PPPP" << event->jobSequenceNumber << endl;
-    //cpuQ.push(event);
-    
-    /*
-    if(event->eventType ==1){ //job created, send it to CPU
-      cpuQ.push(event);
-    } else if(event->eventType == 2){
-      //push to diskQ
-    }*/
-
   
     switch (event->eventType){
       case 1: // code to be executed if n = 1;
@@ -409,48 +389,30 @@ int main(){
           sendToDisk(event, &diskQ1, &diskQ2);
           break;
       case 4: // code to be executed if n = 2;
+        event->eventType = 1;
+        //priorityQ.push_back(*event); //sending the job back to the queue
           break;
       case 5: // code to be executed if n = 2;
+      //priorityQ.push_back(*event); // sending the job back to the queue
           break;
       case 6: // code to be executed if n = 2;
           break;
     }
-  
-
-    //pushing it to the cpuQ
-    //cpuQ.push(newEvent);
 
     //starting the task for CPU & the Disks
     cpu->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
-    //disk1->task(tick, &disk1Q, &priorityQ);
-    //disk2->task(tick, &disk1Q, &priorityQ);
-
-    
-    //printing the log
-    
-
-    
+    disk1->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
+    disk2->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
     
     tick++; //incrementing the time of the clock
     
     
   }
-
-/*
-  while(!cpuq.empty()){
-      Event e = cpuq.front();
-      cpuq.erase(priorityQ.begin());
-      cout << e.eventType << " Seq N " << e.jobSequenceNumber << " time" << e.time << " CPUQ Size "<< cpuq.size()<<endl;
-    }*/
   
-  
-
-  
-  /*
-  cout << "============= Stats ===============";
-  cout << "list of items in cpuQ: " << cpuQ.size << endl;
-  cout << "List of items in diskQ1: " << disk1Q.size << endl;
-  cout << "List of items in diskQ2: " << disk2Q.size << endl;
+  cout << "============= Stats ===============" << endl;
+  cout << "List of items in cpuQ: " << cpuq.size() << endl;
+  cout << "List of items in diskQ1: " << diskQ1.size() << endl;
+  cout << "List of items in diskQ2: " << diskQ2.size() << endl;
   cout << "List of items in priorityQ: " << priorityQ.size() << endl;
-  */
+  
 }
