@@ -14,7 +14,6 @@ int QUIT_PROB = 5;
 int CPU_MIN = 1;
 int CPU_MAX = 3;
 int DISK1_MIN = 2;
-
 int DISK1_MAX = 6;
 int DISK2_MIN = 3;
 int DISK2_MAX = 7;
@@ -175,19 +174,20 @@ private:
 public:
   CPU(){};
 
-  void task(Queue *cpuQ, int tick, Queue *disk1Q, Queue *disk2Q, vector<Event> *priorityQ){
+  void task(vector<Event> *cpuQ, int tick, Queue *disk1Q, Queue *disk2Q, vector<Event> *priorityQ){
 
     bool pDebug = false;
     if (idleState) { //if idle is true
     if(pDebug) cout << "CPU is in idle state" << endl;
-      if (cpuQ->isempty()) { //if the cpuQ is empty
+      if (cpuQ->empty()) { //if the cpuQ is empty
         idleState = true;
         if(pDebug)cout << "que is empty" << endl;
         return;
       } else { //if cpuQ is not empty
         
         idleState = false; //set the process to busy
-        Event processEvent = cpuQ->pop();
+        Event processEvent = cpuQ->front();
+        cpuQ->erase(cpuQ->begin());
         jobSequenceNumber = processEvent.jobSequenceNumber;
         //cout << "Process event time " << processEvent.time << endl;
         processTime = rand()%CPU_MAX-CPU_MIN + CPU_MAX;
@@ -198,11 +198,10 @@ public:
       if (cpuClock == processTime) {
         if(pDebug) cout << processTime << " " << processTime << endl;
         int probability = rand()%10+1;
-        cout << ":::Job " << jobSequenceNumber << " completed at " << tick+1 << endl;
         Event *eventToBeLoaded = (Event*)malloc(sizeof(Event));
         eventToBeLoaded->eventType = 2;
         eventToBeLoaded->time = tick+1;
-        eventToBeLoaded->jobSequenceNumber = 0;
+        eventToBeLoaded->jobSequenceNumber = jobSequenceNumber;
 
         //vent eventToBeLoaded = Event(tick+1,jobSequenceNumber,2);
         //cout << "Job COmpleted" << endl;
@@ -304,23 +303,39 @@ void printLog(Event element){
   int eventType = element.eventType;
 
   switch (eventType) {
-    case 1: cout << "At time " << time << " Job" << jobSequenceNumber << " arrives" << endl;
+    case 1: cout << "At time " << time << " Job " << jobSequenceNumber << " arrives" << endl;
     break;
-    case 2: cout << "At time " << time << " Job" << jobSequenceNumber << " finishes at CPU" << endl;
+    case 2: cout << "At time " << time << " Job " << jobSequenceNumber << " finishes at CPU" << endl;
     break;
-    case 3: cout << "At time " << time << " Job" << jobSequenceNumber << " arrives at Disk" << endl;
+    case 3: cout << "At time " << time << " Job " << jobSequenceNumber << " arrives at Disk" << endl;
     break;
-    case 4: cout << "At time " << time << " Job" << jobSequenceNumber << " finishes IO at Disk 1" << endl;
+    case 4: cout << "At time " << time << " Job " << jobSequenceNumber << " finishes IO at Disk 1" << endl;
     break;
-    case 5: cout << "At time " << time << " Job" << jobSequenceNumber << " finishes IO at Disk 2" << endl;
+    case 5: cout << "At time " << time << " Job " << jobSequenceNumber << " finishes IO at Disk 2" << endl;
     break;
-    case 6: cout << "At time " << time << " Job" << jobSequenceNumber << " exits" << endl;
+    case 6: cout << "At time " << time << " Job " << jobSequenceNumber << " exits" << endl;
     break;
   }
 }
 
-void sendToDisk(Event *event, Disk *disk1, Disk *disk2){
+void findExitProbability(Event *event, vector<Event> *priorityQ, int tick){
+  int probability = rand()%10+1;
+  event->time = tick+1;
+  if (probability%QUIT_PROB) { //calculating the probablity for the job to exit
+      //Event eventToBeLoaded = Event(processTime,jobSequenceNumber,6);
+      event->eventType = 6;
+    } else { //load the job to the diskQ
+      event->eventType = 3;
+  }
+  priorityQ->push_back(*event);
+  //printLog(*event);
+}
 
+void sendToDisk(Event *event, vector<Event> *diskQ1, vector<Event> *diskQ2){
+  if(diskQ1->size()<diskQ2->size())
+    diskQ1->push_back(*event);
+  else
+    diskQ2->push_back(*event);
 }
 
 int main(){
@@ -333,6 +348,8 @@ int main(){
   Queue disk2Q;
   vector<Event> priorityQ;
   vector<Event> cpuq;
+  vector<Event> diskQ1;
+  vector<Event> diskQ2;
   CPU *cpu = new CPU;
   Disk *disk1 = new Disk(DISK1_MAX,DISK1_MIN, 4);
   Disk *disk2 = new Disk(DISK2_MAX,DISK2_MIN, 5);
@@ -340,16 +357,10 @@ int main(){
   Event *event1 = new Event(1,1,1);
   Event *event2 = new Event(2,2,1);
   Event *event3 = new Event(3,3,1);
-  Event *event4 = new Event(4,4,1);
-  Event *event5 = new Event(5,5,1);
-  Event *event6 = new Event(6,6,1);
   //loading events to priorityQ
   priorityQ.push_back(*event1);
   priorityQ.push_back(*event2);
   priorityQ.push_back(*event3);
-  priorityQ.push_back(*event4);
-  priorityQ.push_back(*event5);
-  priorityQ.push_back(*event6);
 
   
 
@@ -389,14 +400,13 @@ int main(){
   
     switch (event->eventType){
       case 1: // code to be executed if n = 1;
-        //cpuQ.push(event);
         cpuq.push_back(*event);
           break;
       case 2: // code to be executed if n = 2;
-          //cout << "I have been called" << endl;
-          sendToDisk(event, disk1, disk2);
+          findExitProbability(event, &priorityQ, tick);
             break;
       case 3: // code to be executed if n = 2;
+          sendToDisk(event, &diskQ1, &diskQ2);
           break;
       case 4: // code to be executed if n = 2;
           break;
@@ -411,9 +421,9 @@ int main(){
     //cpuQ.push(newEvent);
 
     //starting the task for CPU & the Disks
-    //cpu->task(&cpuQ, tick, &disk1Q, &disk2Q, &priorityQ);
-    disk1->task(tick, &disk1Q, &priorityQ);
-    disk2->task(tick, &disk1Q, &priorityQ);
+    cpu->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
+    //disk1->task(tick, &disk1Q, &priorityQ);
+    //disk2->task(tick, &disk1Q, &priorityQ);
 
     
     //printing the log
@@ -426,12 +436,12 @@ int main(){
     
   }
 
-
+/*
   while(!cpuq.empty()){
       Event e = cpuq.front();
       cpuq.erase(priorityQ.begin());
-      cout << e.eventType << " Seq N " << e.jobSequenceNumber << " time" << e.time << " CPUQ Size "<< cpuQ.size<<endl;
-    }
+      cout << e.eventType << " Seq N " << e.jobSequenceNumber << " time" << e.time << " CPUQ Size "<< cpuq.size()<<endl;
+    }*/
   
   
 
