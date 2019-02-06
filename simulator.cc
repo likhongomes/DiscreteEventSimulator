@@ -6,7 +6,7 @@
 #include <sstream>
 
 
-int INIT_TIME = 0;
+int INIT_TIME = 4;
 int FIN_TIME = 1000;
 int ARRIVE_MIN = 5;
 int ARRIVE_MAX = 30;
@@ -185,7 +185,7 @@ public:
 
   void task(vector<Event> *cpuQ, int tick, Queue *disk1Q, Queue *disk2Q, vector<Event> *priorityQ){
 
-    bool pDebug = true;
+    bool pDebug = false;
     if (idleState) { //if idle is true
     if(pDebug) cout << name << " is in idle mode " << endl;
       if (cpuQ->empty()) { //if the cpuQ is empty
@@ -339,17 +339,17 @@ int main(){
       case 2: // code to be executed if n = 2;
           findExitProbability(event, &priorityQ, tick);
             break;
-      case 3: // code to be executed if n = 2;
+      case 3: // code to be executed if n = 3;
           sendToDisk(event, &diskQ1, &diskQ2);
           break;
-      case 4: // code to be executed if n = 2;
+      case 4: // code to be executed if n = 4;
         event->eventType = 1;
         //priorityQ.push_back(*event); //sending the job back to the queue
           break;
-      case 5: // code to be executed if n = 2;
+      case 5: // code to be executed if n = 5;
       //priorityQ.push_back(*event); // sending the job back to the queue
           break;
-      case 6: // code to be executed if n = 2;
+      case 6: // code to be executed if n = 6;
           break;
     }
 
@@ -362,7 +362,13 @@ int main(){
     
     
   }
-  
+/*
+  while(!priorityQ.empty()){
+    Event event = priorityQ.front();
+    priorityQ.erase(priorityQ.begin());
+    cout << event.eventType << " " << event.jobSequenceNumber <<endl;
+  }
+  */
   cout << "============= Stats ===============" << endl;
   cout << "List of items in cpuQ: " << cpuq.size() << endl;
   cout << "List of items in diskQ1: " << diskQ1.size() << endl;
