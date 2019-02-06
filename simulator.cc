@@ -174,6 +174,7 @@ private:
   int maxTime;
   Event *processEvent = new Event(0,0,0);
 public:
+  int totalOperation = 0;
   Component(int minTime, int maxTime, int eventType){
     this->minTime = minTime;
     this->maxTime = maxTime;
@@ -202,7 +203,7 @@ public:
       }
     } else { // if cpu is busy
       if (cpuClock == processTime) {
-        if(pDebug) cout << processTime << " " << processTime << endl;
+        totalOperation++;
         int probability = rand()%10+1;
         Event *eventToBeLoaded = (Event*)malloc(sizeof(Event));
         eventToBeLoaded->eventType = eventType;
@@ -367,7 +368,7 @@ int main(){
     newEvent->time = jobCreationTime;
     newEvent->jobSequenceNumber = tick+1;
 
-    priorityQ.push_back(*newEvent);
+    //priorityQ.push_back(*newEvent);
 
     std::sort(priorityQ.begin(),priorityQ.end(),[ ]( const Event& lhs, const Event& rhs){
       return lhs.time < rhs.time;
@@ -381,6 +382,7 @@ int main(){
     switch (event->eventType){
       case 1: // code to be executed if n = 1;
         cpuq.push_back(*event);
+        cout << " asf"<< cpuq.size() << endl;
           break;
       case 2: // code to be executed if n = 2;
           findExitProbability(event, &priorityQ, tick);
@@ -400,7 +402,7 @@ int main(){
     }
 
     //starting the task for CPU & the Disks
-    cpu->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
+    //cpu->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
     disk1->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
     disk2->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
     
@@ -414,5 +416,8 @@ int main(){
   cout << "List of items in diskQ1: " << diskQ1.size() << endl;
   cout << "List of items in diskQ2: " << diskQ2.size() << endl;
   cout << "List of items in priorityQ: " << priorityQ.size() << endl;
-  
+  cout << "Total operations by the CPU: " << cpu->totalOperation << endl;
+  cout << "Total operations by the Disk1: " << disk1->totalOperation << endl;
+  cout << "Total operations by the Disk2: " << disk2->totalOperation << endl;
+  cout << "===================================" << endl;
 }
