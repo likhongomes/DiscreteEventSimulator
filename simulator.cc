@@ -183,20 +183,20 @@ public:
     this->name = name;
   };
 
-  void task(vector<Event> *cpuQ, int tick, Queue *disk1Q, Queue *disk2Q, vector<Event> *priorityQ){
+  void task(vector<Event> *cQueue, int tick, vector<Event> *priorityQ){
 
     bool pDebug = false;
     if (idleState) { //if idle is true
     if(pDebug) cout << name << " is in idle mode " << endl;
-      if (cpuQ->empty()) { //if the cpuQ is empty
+      if (cQueue->empty()) { //if the cQueue is empty
         idleState = true;
         if(pDebug)cout << "que is empty" << endl;
         return;
-      } else { //if cpuQ is not empty
+      } else { //if cQueue is not empty
         
         idleState = false; //set the process to busy
-        Event processEvent = cpuQ->front();
-        cpuQ->erase(cpuQ->begin());
+        Event processEvent = cQueue->front();
+        cQueue->erase(cQueue->begin());
         jobSequenceNumber = processEvent.jobSequenceNumber;
         //cout << "Process event time " << processEvent.time << endl;
         processTime = rand()%maxTime-minTime + maxTime;
@@ -313,6 +313,7 @@ int main(){
     //measuring the job creating time randomly
     int jobCreationTime = rand()%ARRIVE_MAX-ARRIVE_MIN + ARRIVE_MIN + tick;
     
+    
     //Creating a new event and then pushing it to the queue
     Event *newEvent = (Event*)malloc(sizeof(Event));
     newEvent->eventType = 1;
@@ -327,6 +328,9 @@ int main(){
     });
 
     
+    cout << "diskQ1 size: "<<diskQ1.size() << endl;
+    cout << "diskQ2 size: "<<diskQ2.size() << endl;
+
     Event *event = &priorityQ.front();
     priorityQ.erase(priorityQ.begin());
     printLog(*event);
@@ -354,21 +358,15 @@ int main(){
     }
 
     //starting the task for CPU & the Disks
-    cpu->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
-    disk1->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
-    disk2->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
+    cpu->task(&cpuq, tick, &priorityQ);
+    disk1->task(&diskQ1, tick, &priorityQ);
+    disk2->task(&diskQ2, tick, &priorityQ);
     
     tick++; //incrementing the time of the clock
     
     
   }
-/*
-  while(!priorityQ.empty()){
-    Event event = priorityQ.front();
-    priorityQ.erase(priorityQ.begin());
-    cout << event.eventType << " " << event.jobSequenceNumber <<endl;
-  }
-  */
+
   cout << "============= Stats ===============" << endl;
   cout << "List of items in cpuQ: " << cpuq.size() << endl;
   cout << "List of items in diskQ1: " << diskQ1.size() << endl;
