@@ -172,20 +172,22 @@ private:
   int processTime = 1;
   int minTime;
   int maxTime;
+  string name;
   Event *processEvent = new Event(0,0,0);
 public:
   int totalOperation = 0;
-  Component(int minTime, int maxTime, int eventType){
+  Component(int minTime, int maxTime, int eventType, string name){
     this->minTime = minTime;
     this->maxTime = maxTime;
     this->eventType = eventType;
+    this->name = name;
   };
 
   void task(vector<Event> *cpuQ, int tick, Queue *disk1Q, Queue *disk2Q, vector<Event> *priorityQ){
 
-    bool pDebug = false;
+    bool pDebug = true;
     if (idleState) { //if idle is true
-    if(pDebug) cout << "CPU is in idle state" << endl;
+    if(pDebug) cout << name << " is in idle mode " << endl;
       if (cpuQ->empty()) { //if the cpuQ is empty
         idleState = true;
         if(pDebug)cout << "que is empty" << endl;
@@ -198,7 +200,7 @@ public:
         jobSequenceNumber = processEvent.jobSequenceNumber;
         //cout << "Process event time " << processEvent.time << endl;
         processTime = rand()%maxTime-minTime + maxTime;
-        if(pDebug)cout << "cpu is processing" << " time " << cpuClock << " New process time: " << processTime << endl;
+        if(pDebug)cout << name <<" just took a job: " << jobSequenceNumber << " job time: " << processTime << " cpu clock: " << cpuClock<< endl;
         //printLog(eventToBeLoaded);
       }
     } else { // if cpu is busy
@@ -214,6 +216,7 @@ public:
         idleState = true;
       } else {
         cpuClock++;
+        if(pDebug) cout << name << " is still processing job " << jobSequenceNumber << " waiting for time " << processTime << " cpu time " << cpuClock << endl; 
       }
     }
     
@@ -224,60 +227,7 @@ public:
   }
 };
 
-class Disk{
-private:
-  int time;
-  int eventType;
-  int toBeEventType;
-  int jobSequenceNumber;
-  bool idleState = true;
-  int waitTime;
-  int processTime = 1;
-  int DISK_MAX;
-  int DISK_MIN;
-  Event *processEvent = new Event(0,0,0);
 
-public:
-  Disk(int DISK_MAX, int DISK_MIN,int toBeEventType){
-    this->DISK_MAX = DISK_MAX;
-    this->DISK_MIN = DISK_MIN;
-    this->toBeEventType = toBeEventType;
-  };
-
-  void task(int tick, Queue *diskQ, vector<Event> *priorityQ){
-  //  if (debugModeOn) {cout << "size of cpuQ = "<<diskQ->size << endl;}
-    if (idleState) {
-
-      if (diskQ->isempty()) {
-        idleState = true;
-      //  if(debugModeOn){cout << "Diskque is empty" << endl;
-      } else {
-        //if(debugModeOn){cout << "Invoked jjjjjjjjjjjjjjjjj" << endl;}
-        idleState = false;
-        Event processEvent = diskQ->pop();
-        jobSequenceNumber = processEvent.jobSequenceNumber;
-  //      if(debugModeOn){cout << "Old Process Time " << processEvent.time <<" " << time << " "<< endl;}
-        cout << processEvent.time << endl;
-        processTime = rand()%DISK_MAX-DISK_MIN + DISK_MAX;
-        //processEvent.time = processTime;
-    //    if(debugModeOn){cout << "New Process time " << processEvent.time << endl;}
-
-        Event eventToBeLoaded = Event(processTime,jobSequenceNumber,eventType);
-        cout <<  "CPU Event " << eventToBeLoaded.time <<" " << eventToBeLoaded.jobSequenceNumber << endl;
-        priorityQ->push_back(eventToBeLoaded);
-        cout << "Process Time " << processTime << endl;
-      }
-      //cout << "CPU IS BUSY" << endl;
-    } else {
-      cout << "checking " << tick << " " << processTime << endl;
-      if (tick == processTime) {
-        cout << "CPU UNlocked" << endl;
-        idleState = true;
-      }
-    }
-  }
-
-};
 
 
 
@@ -340,9 +290,9 @@ int main(){
   vector<Event> cpuq;
   vector<Event> diskQ1;
   vector<Event> diskQ2;
-  Component *cpu = new Component(CPU_MIN, CPU_MAX, 2);
-  Component *disk1 = new Component(DISK1_MIN,DISK1_MAX, 4);
-  Component *disk2 = new Component(DISK2_MIN, DISK2_MAX, 5);
+  Component *cpu = new Component(CPU_MIN, CPU_MAX, 2, "CPU");
+  Component *disk1 = new Component(DISK1_MIN,DISK1_MAX, 4, "disk1");
+  Component *disk2 = new Component(DISK2_MIN, DISK2_MAX, 5, "disk2");
 
   //Creating first 
   Event *event1 = new Event(1,1,1);
@@ -353,12 +303,13 @@ int main(){
   priorityQ.push_back(*event2);
   priorityQ.push_back(*event3);
 
-  
-
   //Event *event = new Event(0, 0, 0);
   
   int tick = INIT_TIME; //simulation clock
   while(!priorityQ.empty() && tick < FIN_TIME){
+
+    
+
     //measuring the job creating time randomly
     int jobCreationTime = rand()%ARRIVE_MAX-ARRIVE_MIN + ARRIVE_MIN + tick;
     
@@ -368,21 +319,22 @@ int main(){
     newEvent->time = jobCreationTime;
     newEvent->jobSequenceNumber = tick+1;
 
-    //priorityQ.push_back(*newEvent);
+    priorityQ.push_back(*newEvent);
 
     std::sort(priorityQ.begin(),priorityQ.end(),[ ]( const Event& lhs, const Event& rhs){
       return lhs.time < rhs.time;
 
     });
 
+    
     Event *event = &priorityQ.front();
     priorityQ.erase(priorityQ.begin());
     printLog(*event);
   
+    
     switch (event->eventType){
       case 1: // code to be executed if n = 1;
         cpuq.push_back(*event);
-        cout << " asf"<< cpuq.size() << endl;
           break;
       case 2: // code to be executed if n = 2;
           findExitProbability(event, &priorityQ, tick);
@@ -402,7 +354,7 @@ int main(){
     }
 
     //starting the task for CPU & the Disks
-    //cpu->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
+    cpu->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
     disk1->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
     disk2->task(&cpuq, tick, &disk1Q, &disk2Q, &priorityQ);
     
@@ -416,6 +368,7 @@ int main(){
   cout << "List of items in diskQ1: " << diskQ1.size() << endl;
   cout << "List of items in diskQ2: " << diskQ2.size() << endl;
   cout << "List of items in priorityQ: " << priorityQ.size() << endl;
+  cout << endl;
   cout << "Total operations by the CPU: " << cpu->totalOperation << endl;
   cout << "Total operations by the Disk1: " << disk1->totalOperation << endl;
   cout << "Total operations by the Disk2: " << disk2->totalOperation << endl;
