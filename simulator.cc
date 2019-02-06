@@ -7,7 +7,7 @@
 
 
 int INIT_TIME = 4;
-int FIN_TIME = 1000;
+int FIN_TIME = 100000;
 int ARRIVE_MIN = 5;
 int ARRIVE_MAX = 30;
 int QUIT_PROB = 5;
@@ -18,13 +18,14 @@ int DISK1_MAX = 6;
 int DISK2_MIN = 3;
 int DISK2_MAX = 7;
 
-bool cpuIdleState = true;
+int totalItemAddedInDiskQ1 = 0;
+int totalItemAddedInDiskQ2 = 0;
+
 
 using namespace std;
 std::vector<std::string> vec;
 
 void readFile(){
-
   string output;
   std::ifstream myfile;
   myfile.open("configuration.txt");
@@ -176,6 +177,7 @@ private:
   Event *processEvent = new Event(0,0,0);
 public:
   int totalOperation = 0;
+  int totalTimeComponentIsBusy = 0;
   Component(int minTime, int maxTime, int eventType, string name){
     this->minTime = minTime;
     this->maxTime = maxTime;
@@ -185,9 +187,10 @@ public:
 
   void task(vector<Event> *cQueue, int tick, vector<Event> *priorityQ){
 
-    bool pDebug = false;
+    bool pDebug = false; //Set it to true for debugging purposes
+
     if (idleState) { //if idle is true
-    if(pDebug) cout << name << " is in idle mode " << endl;
+      if(pDebug) cout << name << " is in idle mode " << endl;
       if (cQueue->empty()) { //if the cQueue is empty
         idleState = true;
         if(pDebug)cout << "que is empty" << endl;
@@ -204,6 +207,7 @@ public:
         //printLog(eventToBeLoaded);
       }
     } else { // if cpu is busy
+      totalTimeComponentIsBusy++;
       if (cpuClock == processTime) {
         totalOperation++;
         int probability = rand()%10+1;
@@ -267,10 +271,14 @@ void findExitProbability(Event *event, vector<Event> *priorityQ, int tick){
 }
 
 void sendToDisk(Event *event, vector<Event> *diskQ1, vector<Event> *diskQ2){
-  if(diskQ1->size()<diskQ2->size())
+  //cout << "sending to disk" << endl;
+  if(diskQ1->size()<diskQ2->size()){
     diskQ1->push_back(*event);
-  else
+    totalItemAddedInDiskQ1++;
+  } else {
     diskQ2->push_back(*event);
+    totalItemAddedInDiskQ2++;
+  } 
 }
 
 
@@ -282,9 +290,6 @@ int main(){
   //readFile();
 
   srand(time(NULL));
-  Queue cpuQ;
-  Queue disk1Q;
-  Queue disk2Q;
 
   vector<Event> priorityQ;
   vector<Event> cpuq;
@@ -328,8 +333,8 @@ int main(){
     });
 
     
-    cout << "diskQ1 size: "<<diskQ1.size() << endl;
-    cout << "diskQ2 size: "<<diskQ2.size() << endl;
+    //cout << "diskQ1 size: "<<diskQ1.size() << endl;
+    //cout << "diskQ2 size: "<<diskQ2.size() << endl;
 
     Event *event = &priorityQ.front();
     priorityQ.erase(priorityQ.begin());
@@ -368,13 +373,25 @@ int main(){
   }
 
   cout << "============= Stats ===============" << endl;
-  cout << "List of items in cpuQ: " << cpuq.size() << endl;
-  cout << "List of items in diskQ1: " << diskQ1.size() << endl;
-  cout << "List of items in diskQ2: " << diskQ2.size() << endl;
-  cout << "List of items in priorityQ: " << priorityQ.size() << endl;
+  cout << "Total time ran: " << FIN_TIME << endl;
+  cout << "========== Queue Stats ============" << endl;
+  cout << "Incomplete tasks in cpuQ: " << cpuq.size() << endl;
+  cout << "Total Item added in Disk 1: " << totalItemAddedInDiskQ1 << endl;
+  cout << "Incomplete tasks in diskQ1: " << diskQ1.size() << endl;
+  cout << "Total Item added in Disk 2: " << totalItemAddedInDiskQ2 << endl;
+  cout << "Incomplete tasks in diskQ2: " << diskQ2.size() << endl;
+  cout << "Incomplete tasks in priorityQ: " << priorityQ.size() << endl;
+  cout << "======== Component Stats ==========" << endl;
   cout << endl;
-  cout << "Total operations by the CPU: " << cpu->totalOperation << endl;
-  cout << "Total operations by the Disk1: " << disk1->totalOperation << endl;
-  cout << "Total operations by the Disk2: " << disk2->totalOperation << endl;
+  cout << "Total operations completed by the CPU: " << cpu->totalOperation << endl;
+  cout << "Total operations completed by the Disk1: " << disk1->totalOperation << endl;
+  cout << "Total operations completed by the Disk2: " << disk2->totalOperation << endl;
+  
+  
+  cout << "========== Disk2 Stats ============" << endl;
+  cout << endl;
+  cout << "Total time component Cpu is busy doing task: " << cpu->totalTimeComponentIsBusy << endl;
+  cout << "Total time component disk1 is busy doing task: " << disk2->totalTimeComponentIsBusy << endl;
+  cout << "Total time component disk2 is busy doing task: " << disk2->totalTimeComponentIsBusy << endl;
   cout << "===================================" << endl;
 }
