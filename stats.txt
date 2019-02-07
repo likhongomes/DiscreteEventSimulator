@@ -1,0 +1,40 @@
+============= Stats ===============
+Total time ran: 1000
+========== Queue Stats ============
+Incomplete tasks in cpuQ: 448
+Total Item added in Disk 1: 3
+Incomplete tasks in diskQ1: 0
+Total Item added in Disk 2: 28
+Incomplete tasks in diskQ2: 0
+Incomplete tasks in priorityQ: 373
+======== Component Stats ==========
+
+Total operations completed by the CPU: 200
+Total operations completed by the Disk1: 3
+Total operations completed by the Disk2: 28
+========== Disk2 Stats ============
+
+Total time Cpu is busy doing task: 795
+Total time disk1 is busy doing task: 234
+Total time disk2 is busy doing task: 234
+===================================
+============= Stats ===============
+Total time ran: 1000 units 
+========== Queue Stats ============
+Incomplete tasks in cpuQ: 451
+Total Item added in Disk 1: 4
+Incomplete tasks in diskQ1: 0
+Total Item added in Disk 2: 35
+Incomplete tasks in diskQ2: 0
+Incomplete tasks in priorityQ: 379
+======== Component Stats ==========
+
+Total operations completed by the CPU: 198
+Total operations completed by the Disk1: 4
+Total operations completed by the Disk2: 34
+========== Disk2 Stats ============
+
+Total time Cpu is busy doing task: 797 units 
+Total time disk1 is busy doing task: 266 units 
+Total time disk2 is busy doing task: 266 units 
+===================================

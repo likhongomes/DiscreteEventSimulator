@@ -7,7 +7,7 @@
 
 
 int INIT_TIME = 4;
-int FIN_TIME = 100000;
+int FIN_TIME = 1000;
 int ARRIVE_MIN = 5;
 int ARRIVE_MAX = 30;
 int QUIT_PROB = 5;
@@ -240,19 +240,27 @@ void printLog(Event element){
   int time = element.time;
   int jobSequenceNumber = element.jobSequenceNumber;
   int eventType = element.eventType;
+  ofstream file;
+  file.open ("log.txt",ios_base::app);
 
   switch (eventType) {
     case 1: cout << "At time " << time << " Job " << jobSequenceNumber << " arrives" << endl;
+    file << "At time " << time << " Job " << jobSequenceNumber << " arrives" << endl;
     break;
     case 2: cout << "At time " << time << " Job " << jobSequenceNumber << " finishes at CPU" << endl;
+    file << "At time " << time << " Job " << jobSequenceNumber << " finishes at CPU" << endl;
     break;
     case 3: cout << "At time " << time << " Job " << jobSequenceNumber << " arrives at Disk" << endl;
+    file << "At time " << time << " Job " << jobSequenceNumber << " arrives at Disk" << endl;
     break;
     case 4: cout << "At time " << time << " Job " << jobSequenceNumber << " finishes IO at Disk 1" << endl;
+    file << "At time " << time << " Job " << jobSequenceNumber << " finishes IO at Disk 1" << endl;
     break;
     case 5: cout << "At time " << time << " Job " << jobSequenceNumber << " finishes IO at Disk 2" << endl;
+    file << "At time " << time << " Job " << jobSequenceNumber << " finishes IO at Disk 2" << endl;
     break;
     case 6: cout << "At time " << time << " Job " << jobSequenceNumber << " exits" << endl;
+    file << "At time " << time << " Job " << jobSequenceNumber << " exits" << endl;
     break;
   }
 }
@@ -286,6 +294,8 @@ void sendToDisk(Event *event, vector<Event> *diskQ1, vector<Event> *diskQ2){
 
 
 int main(){
+  ofstream file;
+  file.open ("stats.txt",ios_base::app);
 
   //readFile();
 
@@ -390,8 +400,35 @@ int main(){
   
   cout << "========== Disk2 Stats ============" << endl;
   cout << endl;
-  cout << "Total time component Cpu is busy doing task: " << cpu->totalTimeComponentIsBusy << endl;
-  cout << "Total time component disk1 is busy doing task: " << disk2->totalTimeComponentIsBusy << endl;
-  cout << "Total time component disk2 is busy doing task: " << disk2->totalTimeComponentIsBusy << endl;
+  cout << "Total time Cpu is busy doing task: " << cpu->totalTimeComponentIsBusy << " units " << endl;
+  cout << "Total time disk1 is busy doing task: " << disk2->totalTimeComponentIsBusy << " units " << endl;
+  cout << "Total time disk2 is busy doing task: " << disk2->totalTimeComponentIsBusy << " units "<< endl;
   cout << "===================================" << endl;
+
+
+
+
+  file << "============= Stats ===============" << endl;
+  file << "Total time ran: " << FIN_TIME << " units " <<endl;
+  file << "========== Queue Stats ============" << endl;
+  file << "Incomplete tasks in cpuQ: " << cpuq.size() << endl;
+  file << "Total Item added in Disk 1: " << totalItemAddedInDiskQ1 << endl;
+  file << "Incomplete tasks in diskQ1: " << diskQ1.size() << endl;
+  file << "Total Item added in Disk 2: " << totalItemAddedInDiskQ2 << endl;
+  file << "Incomplete tasks in diskQ2: " << diskQ2.size() << endl;
+  file << "Incomplete tasks in priorityQ: " << priorityQ.size() << endl;
+  file << "======== Component Stats ==========" << endl;
+  file << endl;
+  file << "Total operations completed by the CPU: " << cpu->totalOperation << endl;
+  file << "Total operations completed by the Disk1: " << disk1->totalOperation << endl;
+  file << "Total operations completed by the Disk2: " << disk2->totalOperation << endl;
+  
+  
+  file << "========== Disk2 Stats ============" << endl;
+  file << endl;
+  file << "Total time Cpu is busy doing task: " << cpu->totalTimeComponentIsBusy << " units "<< endl;
+  file << "Total time disk1 is busy doing task: " << disk2->totalTimeComponentIsBusy << " units " << endl;
+  file << "Total time disk2 is busy doing task: " << disk2->totalTimeComponentIsBusy << " units " << endl;
+  file << "===================================" << endl;
 }
+
