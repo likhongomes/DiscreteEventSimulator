@@ -4,24 +4,22 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
-#include "ReadData.c"
 
-int SEED = atoi(getValue("configuration.txt", "SEED", 0, 1));
-int INIT_TIME = atoi(getValue("configuration.txt", "INIT_TIME", 0, 1));
-int FIN_TIME = atoi(getValue("configuration.txt", "FIN_TIME", 0, 1));
-int ARRIVE_MIN = atoi(getValue("configuration.txt", "ARRIVE_MIN", 0, 1));
-int ARRIVE_MAX = atoi(getValue("configuration.txt", "ARRIVE_MAX", 0, 1));
-int QUIT_PROB = atoi(getValue("configuration.txt", "QUIT_PROB", 0, 1));
-int CPU_MIN = atoi(getValue("configuration.txt", "CPU_MIN", 0, 1));
-int CPU_MAX = atoi(getValue("configuration.txt", "CPU_MAX", 0, 1));
-int DISK1_MIN = atoi(getValue("configuration.txt", "DISK1_MIN", 0, 1));
-int DISK1_MAX = atoi(getValue("configuration.txt", "DISK1_MAX", 0, 1));
-int DISK2_MIN = atoi(getValue("configuration.txt", "DISK2_MIN", 0, 1));
-int DISK2_MAX = atoi(getValue("configuration.txt", "DISK2_MAX", 0, 1));
+
+int INIT_TIME = 4;
+int FIN_TIME = 100000;
+int ARRIVE_MIN = 5;
+int ARRIVE_MAX = 30;
+int QUIT_PROB = 5;
+int CPU_MIN = 1;
+int CPU_MAX = 3;
+int DISK1_MIN = 2;
+int DISK1_MAX = 6;
+int DISK2_MIN = 3;
+int DISK2_MAX = 7;
 
 int totalItemAddedInDiskQ1 = 0;
 int totalItemAddedInDiskQ2 = 0;
-int totalItemAddedInCpuQ = 0;
 
 
 using namespace std;
@@ -178,7 +176,6 @@ private:
   string name;
   Event *processEvent = new Event(0,0,0);
 public:
-  int responseTimes = 0;
   int totalOperation = 0;
   int totalTimeComponentIsBusy = 0;
   Component(int minTime, int maxTime, int eventType, string name){
@@ -189,7 +186,7 @@ public:
   };
 
   void task(vector<Event> *cQueue, int tick, vector<Event> *priorityQ){
-    srand(SEED);
+
     bool pDebug = false; //Set it to true for debugging purposes
 
     if (idleState) { //if idle is true
@@ -206,7 +203,6 @@ public:
         jobSequenceNumber = processEvent.jobSequenceNumber;
         //cout << "Process event time " << processEvent.time << endl;
         processTime = rand()%maxTime-minTime + maxTime;
-        responseTimes += processTime;
         if(pDebug)cout << name <<" just took a job: " << jobSequenceNumber << " job time: " << processTime << " cpu clock: " << cpuClock<< endl;
         //printLog(eventToBeLoaded);
       }
@@ -244,33 +240,24 @@ void printLog(Event element){
   int time = element.time;
   int jobSequenceNumber = element.jobSequenceNumber;
   int eventType = element.eventType;
-  ofstream file;
-  file.open ("log.txt",ios_base::app);
 
   switch (eventType) {
     case 1: cout << "At time " << time << " Job " << jobSequenceNumber << " arrives" << endl;
-    file << "At time " << time << " Job " << jobSequenceNumber << " arrives" << endl;
     break;
     case 2: cout << "At time " << time << " Job " << jobSequenceNumber << " finishes at CPU" << endl;
-    file << "At time " << time << " Job " << jobSequenceNumber << " finishes at CPU" << endl;
     break;
     case 3: cout << "At time " << time << " Job " << jobSequenceNumber << " arrives at Disk" << endl;
-    file << "At time " << time << " Job " << jobSequenceNumber << " arrives at Disk" << endl;
     break;
     case 4: cout << "At time " << time << " Job " << jobSequenceNumber << " finishes IO at Disk 1" << endl;
-    file << "At time " << time << " Job " << jobSequenceNumber << " finishes IO at Disk 1" << endl;
     break;
     case 5: cout << "At time " << time << " Job " << jobSequenceNumber << " finishes IO at Disk 2" << endl;
-    file << "At time " << time << " Job " << jobSequenceNumber << " finishes IO at Disk 2" << endl;
     break;
     case 6: cout << "At time " << time << " Job " << jobSequenceNumber << " exits" << endl;
-    file << "At time " << time << " Job " << jobSequenceNumber << " exits" << endl;
     break;
   }
 }
 
 void findExitProbability(Event *event, vector<Event> *priorityQ, int tick){
-  srand(SEED);
   int probability = rand()%10+1;
   event->time = tick+1;
   if (probability%QUIT_PROB) { //calculating the probablity for the job to exit
@@ -299,14 +286,10 @@ void sendToDisk(Event *event, vector<Event> *diskQ1, vector<Event> *diskQ2){
 
 
 int main(){
-  ofstream file;
-  file.open ("stats.txt");
-
-  cout << " vavavavav " << atoi(getValue("configuration.txt","INIT_TIME",0,1));
 
   //readFile();
 
-  srand(SEED);
+  srand(time(NULL));
 
   vector<Event> priorityQ;
   vector<Event> cpuq;
@@ -361,7 +344,6 @@ int main(){
     switch (event->eventType){
       case 1: // code to be executed if n = 1;
         cpuq.push_back(*event);
-        totalItemAddedInCpuQ++;
           break;
       case 2: // code to be executed if n = 2;
           findExitProbability(event, &priorityQ, tick);
@@ -390,51 +372,26 @@ int main(){
     
   }
 
-
-  readFile();
-
-  cout << endl
-   << "============= Stats ===============" << endl
-   << "Total time ran: " << FIN_TIME - INIT_TIME << " units" << endl
-   << "========== Queue Stats ============" << endl
-   << "Incomplete tasks in cpuQ: " << cpuq.size() << endl
-   << "Total Item added in Disk 1: " << totalItemAddedInDiskQ1 << endl
-   << "Incomplete tasks in diskQ1: " << diskQ1.size() << endl
-   << "Total Item added in Disk 2: " << totalItemAddedInDiskQ2 << endl
-   << "Incomplete tasks in diskQ2: " << diskQ2.size() << endl
-   << "Incomplete tasks in priorityQ: " << priorityQ.size() << endl
-   << "======== Component Stats ==========" << endl
-   << endl
+  cout << "============= Stats ===============" << endl;
+  cout << "Total time ran: " << FIN_TIME << endl;
+  cout << "========== Queue Stats ============" << endl;
+  cout << "Incomplete tasks in cpuQ: " << cpuq.size() << endl;
+  cout << "Total Item added in Disk 1: " << totalItemAddedInDiskQ1 << endl;
+  cout << "Incomplete tasks in diskQ1: " << diskQ1.size() << endl;
+  cout << "Total Item added in Disk 2: " << totalItemAddedInDiskQ2 << endl;
+  cout << "Incomplete tasks in diskQ2: " << diskQ2.size() << endl;
+  cout << "Incomplete tasks in priorityQ: " << priorityQ.size() << endl;
+  cout << "======== Component Stats ==========" << endl;
+  cout << endl;
+  cout << "Total operations completed by the CPU: " << cpu->totalOperation << endl;
+  cout << "Total operations completed by the Disk1: " << disk1->totalOperation << endl;
+  cout << "Total operations completed by the Disk2: " << disk2->totalOperation << endl;
   
   
-   << "========== Disk1 Stats ============" << endl
-   << "Total time disk1 is busy doing task: " << disk1->totalTimeComponentIsBusy << " units " << endl
-   << "Average time disk1 is busy doing task: " << disk1->totalTimeComponentIsBusy/FIN_TIME-INIT_TIME << " units " << endl
-   << "Total jobs completed by disk1: " << disk1->totalOperation << endl
-   << "Job processing average in disk1: " << disk1->totalOperation/totalItemAddedInDiskQ1 << endl
-   << "Average disk1 queue size: " << totalItemAddedInDiskQ1 << endl
-   << "Average response time: " << disk1->responseTimes/disk1->totalOperation << " units"<< endl
-   << "===================================" << endl
-   << endl
-   << "========== Disk2 Stats ============" << endl
-   << "Total time disk2 is busy doing task: " << disk2->totalTimeComponentIsBusy << " units "<< endl
-   << "Average time disk2 is busy doing task: " << disk2->totalTimeComponentIsBusy/FIN_TIME-INIT_TIME << " units " << endl
-   << "Total jobs completed by disk2: " << disk2->totalOperation << endl
-   << "Job processing average in disk2: " << disk2->totalOperation/totalItemAddedInDiskQ2 << endl
-   << "Average disk2 queue size: " << totalItemAddedInDiskQ2 << endl
-   << "Average response time: " << disk2->responseTimes/disk2->totalOperation << " units " << endl
-   << "===================================" << endl
-   << endl
-   << "=========== CPU Stats =============" << endl
-   << "Total time Cpu is busy doing task: " << cpu->totalTimeComponentIsBusy << " units " << endl
-   << "Average time disk1 is busy doing task: " << cpu->totalTimeComponentIsBusy/FIN_TIME-INIT_TIME << " units " << endl
-   << "Total jobs completed by the CPU: " << cpu->totalOperation << endl
-   << "Job processing average in disk2: " << cpu->totalOperation/totalItemAddedInCpuQ << endl
-   << "Average cpu queue size: " << totalItemAddedInCpuQ << endl
-   << "Average response time: " << cpu->responseTimes/cpu->totalOperation << " units " << endl
-   << "===================================" << endl;
-
-
-
+  cout << "========== Disk2 Stats ============" << endl;
+  cout << endl;
+  cout << "Total time component Cpu is busy doing task: " << cpu->totalTimeComponentIsBusy << endl;
+  cout << "Total time component disk1 is busy doing task: " << disk2->totalTimeComponentIsBusy << endl;
+  cout << "Total time component disk2 is busy doing task: " << disk2->totalTimeComponentIsBusy << endl;
+  cout << "===================================" << endl;
 }
-
