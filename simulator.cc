@@ -6,6 +6,18 @@
 #include <sstream>
 #include "ReadData.c"
 
+using namespace std;
+
+/*
+
+Likhon D. Gomes
+CIS 3207 - Operating Systems
+Lab 1 Georgio's Discrete Event Simulator.
+TA: Chenglong Fu
+
+01:41 a.m February 8th, 2019
+
+*/
 
 //Reading data from the document
 int SEED = atoi(getValue("configuration.txt", "SEED", 0, 1));
@@ -21,27 +33,26 @@ int DISK1_MAX = atoi(getValue("configuration.txt", "DISK1_MAX", 0, 1));
 int DISK2_MIN = atoi(getValue("configuration.txt", "DISK2_MIN", 0, 1));
 int DISK2_MAX = atoi(getValue("configuration.txt", "DISK2_MAX", 0, 1));
 
+//Global variabled
 double totalItemAddedInDiskQ1 = 0;
 double totalItemAddedInDiskQ2 = 0;
 double totalItemAddedInCpuQ = 0;
 
-
-using namespace std;
-std::vector<std::string> vec;
-
-
+//The event class
 class Event{
 public:
   Event(int time, int jobSequenceNumber, int eventType){
-    this->time = time;
-    this->jobSequenceNumber = jobSequenceNumber;
-    this->eventType = eventType;
+    this->time = time; // This holds the job time to be executed.
+    this->jobSequenceNumber = jobSequenceNumber; //The sequence number of the job
+    this->eventType = eventType; // This determines the event type
   }
   int time;
   int jobSequenceNumber;
   int eventType;
 };
 
+
+//This is the sorting key for the vector
 class less_than_key{
   inline bool operator() (const Event& class1, const Event& class2)
     {
@@ -50,21 +61,18 @@ class less_than_key{
 };
 
 
-
-
-
-
+//This is the component class which can be used as the CPU or the disk.
 class Component{
 private:
   int eventType;
   int jobSequenceNumber = 0;
-  bool idleState = true;
-  int cpuClock = 0;
+  bool idleState = true; // keeps track of the device state.
+  int cpuClock = 0; // this keeps track of the device hardware
   int processTime = 1;
-  int minTime;
-  int maxTime;
-  string name;
-  Event *processEvent = new Event(0,0,0);
+  int minTime; // this holds the min time for the component
+  int maxTime; // this hold the max time for the componenet
+  string name; // this holds the name of the componenet for debugging purposes
+
 public:
   int responseTimes = 0;
   int totalOperation = 0;
@@ -76,6 +84,7 @@ public:
     this->name = name;
   };
 
+  //Actual function that executes the whole operation.
   void task(vector<Event> *cQueue, int tick, vector<Event> *priorityQ){
     srand(SEED);
     bool pDebug = false; //Set it to true for debugging purposes
@@ -92,11 +101,9 @@ public:
         Event processEvent = cQueue->front();
         cQueue->erase(cQueue->begin());
         jobSequenceNumber = processEvent.jobSequenceNumber;
-        //cout << "Process event time " << processEvent.time << endl;
         processTime = rand()%maxTime-minTime + maxTime;
         responseTimes += processTime;
         if(pDebug)cout << name <<" just took a job: " << jobSequenceNumber << " job time: " << processTime << " cpu clock: " << cpuClock<< endl;
-        //printLog(eventToBeLoaded);
       }
     } else { // if cpu is busy
       totalTimeComponentIsBusy++;
@@ -115,7 +122,7 @@ public:
         if(pDebug) cout << name << " is still processing job " << jobSequenceNumber << " waiting for time " << processTime << " cpu time " << cpuClock << endl; 
       }
     }
-    
+    //Here the queue is sorted once again.
     std::sort(priorityQ->begin(),priorityQ->end(),[ ]( const Event& lhs, const Event& rhs){
       return lhs.time < rhs.time;
 
@@ -123,15 +130,13 @@ public:
   }
 };
 
-
-
-
-
-
+//Takes an event from the queue and prints the log to the screen and a text file.
 void printLog(Event element){
   int time = element.time;
   int jobSequenceNumber = element.jobSequenceNumber;
   int eventType = element.eventType;
+
+  //opening the file to be printed.
   ofstream file;
   file.open ("log.txt",ios_base::app);
 
@@ -157,26 +162,24 @@ void printLog(Event element){
   }
 }
 
+//This function finds the exit probability of an event or if it will go to the disk.
 void findExitProbability(Event *event, vector<Event> *priorityQ, int tick){
   srand(SEED);
   int probability = rand()%10+1;
   event->time = tick+1;
   if (probability%QUIT_PROB) { //calculating the probablity for the job to exit
-      //Event eventToBeLoaded = Event(processTime,jobSequenceNumber,6);
       event->eventType = 6;
     } else { //load the job to the diskQ
       event->eventType = 3;
   }
   priorityQ->push_back(*event);
-  //printLog(*event);
 }
 
+//This function sends the job to the disk with the shortest queue.
 void sendToDisk(Event *event, vector<Event> *diskQ1, vector<Event> *diskQ2){
-  //cout << "sending to disk" << endl;
   if(diskQ1->size()<diskQ2->size()){
     cout << endl;
     diskQ1->push_back(*event);
-    
     totalItemAddedInDiskQ1++;
   } else {
     diskQ2->push_back(*event);
@@ -185,18 +188,15 @@ void sendToDisk(Event *event, vector<Event> *diskQ1, vector<Event> *diskQ2){
 }
 
 
-
-
-
 int main(){
+  //Opens the file to write the statistics in.
   ofstream file;
   file.open ("stats.txt");
 
-
-  //readFile();
-
+  //Setting the seed for the program
   srand(SEED);
 
+  //Setting all the parameters.
   vector<Event> priorityQ;
   vector<Event> cpuq;
   vector<Event> diskQ1;
@@ -205,22 +205,22 @@ int main(){
   Component *disk1 = new Component(DISK1_MIN,DISK1_MAX, 4, "disk1");
   Component *disk2 = new Component(DISK2_MIN, DISK2_MAX, 5, "disk2");
 
-  //Creating first 
+  //Creating first three events.
   Event *event1 = new Event(1,1,1);
   Event *event2 = new Event(2,2,1);
   Event *event3 = new Event(3,3,1);
-  //loading events to priorityQ
+
+  //Loading the first three events to the priority queue.
   priorityQ.push_back(*event1);
   priorityQ.push_back(*event2);
   priorityQ.push_back(*event3);
 
-  //Event *event = new Event(0, 0, 0);
   
   int tick = INIT_TIME; //simulation clock
+
+  //clock starts ticking
   while(!priorityQ.empty() && tick < FIN_TIME){
 
-    cout << " Disk1 size " << diskQ1.size() << endl;
-    cout << "Disk2 size "<<diskQ2.size() << endl;
     
     //measuring the job creating time randomly
     int jobCreationTime = rand()%ARRIVE_MAX-ARRIVE_MIN + ARRIVE_MIN + tick;
@@ -232,22 +232,18 @@ int main(){
     newEvent->time = jobCreationTime;
     newEvent->jobSequenceNumber = tick+1;
 
+    //Pushing the job into the queue.
     priorityQ.push_back(*newEvent);
 
-    std::sort(priorityQ.begin(),priorityQ.end(),[ ]( const Event& lhs, const Event& rhs){
-      return lhs.time < rhs.time;
+    //Sorting the queue after a job is pulled.
+    std::sort(priorityQ.begin(),priorityQ.end(),[ ]( const Event& lhs, const Event& rhs){return lhs.time < rhs.time;});
 
-    });
-
-    
-    //cout << "diskQ1 size: "<<diskQ1.size() << endl;
-    //cout << "diskQ2 size: "<<diskQ2.size() << endl;
-
+    //Taking the first event in the queue
     Event *event = &priorityQ.front();
     priorityQ.erase(priorityQ.begin());
     printLog(*event);
   
-    
+    //Passing the event through the sorter to see what type of job it is.
     switch (event->eventType){
       case 1: // code to be executed if n = 1;
         cpuq.push_back(*event);
@@ -260,28 +256,24 @@ int main(){
           sendToDisk(event, &diskQ1, &diskQ2);
           break;
       case 4: // code to be executed if n = 4;
-        event->eventType = 1;
+        //event->eventType = 1;
         //priorityQ.push_back(*event); //sending the job back to the queue
           break;
       case 5: // code to be executed if n = 5;
-      //priorityQ.push_back(*event); // sending the job back to the queue
+        //priorityQ.push_back(*event); // sending the job back to the queue
           break;
       case 6: // code to be executed if n = 6;
           break;
     }
-
     //starting the task for CPU & the Disks
     cpu->task(&cpuq, tick, &priorityQ);
     disk1->task(&diskQ1, tick, &priorityQ);
     disk2->task(&diskQ2, tick, &priorityQ);
-    
     tick++; //incrementing the time of the clock
-    
-    
   }
 
-
-  cout << endl
+  //Prints the statistics to the file.
+  file << endl
    << "============= Stats ===============" << endl
    << "Total time ran: " << FIN_TIME - INIT_TIME << " units" << endl
    << "========== Queue Stats ============" << endl
@@ -293,8 +285,6 @@ int main(){
    << "Incomplete tasks in priorityQ: " << priorityQ.size() << endl
    << "======== Component Stats ==========" << endl
    << endl
-  
-  
    << "========== Disk1 Stats ============" << endl
    << "Total time disk1 is busy doing task: " << disk1->totalTimeComponentIsBusy << " units " << endl
    << "Average time disk1 is busy doing task: " << (disk1->totalTimeComponentIsBusy/(FIN_TIME-INIT_TIME)) << " units " << endl
@@ -322,7 +312,7 @@ int main(){
    << "Average response time: " << cpu->responseTimes/cpu->totalOperation << " units " << endl
    << "===================================" << endl;
 
-
+   cout << endl << endl << "Please Check The Stats Document in your folder to check statistics." << endl; //Prints the last message reminding the user to check the stats file
 
 }
 

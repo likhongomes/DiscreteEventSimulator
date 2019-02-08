@@ -1,0 +1,38 @@
+
+============= Stats ===============
+Total time ran: 1930 units
+========== Queue Stats ============
+Incomplete tasks in cpuQ: 1124
+Total Item added in Disk 1: 12
+Incomplete tasks in diskQ1: 0
+Total Item added in Disk 2: 224
+Incomplete tasks in diskQ2: 0
+Incomplete tasks in priorityQ: 645
+======== Component Stats ==========
+
+========== Disk1 Stats ============
+Total time disk1 is busy doing task: 60 units 
+Average time disk1 is busy doing task: 0.0310881 units 
+Total jobs completed by disk1: 12
+Job processing average in disk1: 1
+Average disk1 queue size: 12
+Average response time: 4 units
+===================================
+
+========== Disk2 Stats ============
+Total time disk2 is busy doing task: 1116 units 
+Average time disk2 is busy doing task: 0.578238 units 
+Total jobs completed by disk2: 223
+Job processing average in disk2: 0.995536
+Average disk2 queue size: 224
+Average response time: 4 units 
+===================================
+
+=========== CPU Stats =============
+Total time Cpu is busy doing task: 1688 units 
+Average time disk1 is busy doing task: 0.874611 units 
+Total jobs completed by the CPU: 241
+Job processing average in disk2: 0.176428
+Average cpu queue size: 1366
+Average response time: 6 units 
+===================================
