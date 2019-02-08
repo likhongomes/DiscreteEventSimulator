@@ -6,9 +6,11 @@
 #include <sstream>
 #include "ReadData.c"
 
+
+//Reading data from the document
 int SEED = atoi(getValue("configuration.txt", "SEED", 0, 1));
-int INIT_TIME = atoi(getValue("configuration.txt", "INIT_TIME", 0, 1));
-int FIN_TIME = atoi(getValue("configuration.txt", "FIN_TIME", 0, 1));
+float INIT_TIME = atoi(getValue("configuration.txt", "INIT_TIME", 0, 1));
+float FIN_TIME = atoi(getValue("configuration.txt", "FIN_TIME", 0, 1));
 int ARRIVE_MIN = atoi(getValue("configuration.txt", "ARRIVE_MIN", 0, 1));
 int ARRIVE_MAX = atoi(getValue("configuration.txt", "ARRIVE_MAX", 0, 1));
 int QUIT_PROB = atoi(getValue("configuration.txt", "QUIT_PROB", 0, 1));
@@ -19,32 +21,13 @@ int DISK1_MAX = atoi(getValue("configuration.txt", "DISK1_MAX", 0, 1));
 int DISK2_MIN = atoi(getValue("configuration.txt", "DISK2_MIN", 0, 1));
 int DISK2_MAX = atoi(getValue("configuration.txt", "DISK2_MAX", 0, 1));
 
-int totalItemAddedInDiskQ1 = 0;
-int totalItemAddedInDiskQ2 = 0;
-int totalItemAddedInCpuQ = 0;
+double totalItemAddedInDiskQ1 = 0;
+double totalItemAddedInDiskQ2 = 0;
+double totalItemAddedInCpuQ = 0;
 
 
 using namespace std;
 std::vector<std::string> vec;
-
-void readFile(){
-  string output;
-  std::ifstream myfile;
-  myfile.open("configuration.txt");
-  if (myfile.is_open()){
-    while (getline(myfile, output)){
-      vec.push_back(output);
-    }
-  } else {
-    std::cout << "File not found" << std::endl;
-  }
-  cout << vec[0] << " " << vec[1] << endl;
-
-  myfile.close();
-  return;
-}
-
-
 
 
 class Event{
@@ -66,102 +49,7 @@ class less_than_key{
     }
 };
 
-class Queue{
-private:
-  typedef struct node{
-    Event *data;
-    node *next;
-  } *Node;
 
-  Node head;
-  Node current;
-  Node temporary;
-  Node tail;
-public:
-  int size = 0;
-  Queue(){
-    head = NULL;
-    current = NULL;
-    temporary = NULL;
-    tail = NULL;
-  }
-
-  //pushing the Event in Queue
-  void push(Event *element){
-    Node newNode = new node;
-    newNode->next = NULL;
-    newNode->data = element;
-
-    if(head == NULL){
-      head = newNode;
-      tail = head;
-      size++;
-    } else {
-      current = head;
-      while(current->next != NULL){
-        current = current->next;
-      }
-      current->next = newNode;
-      tail = current->next;
-      size++;
-    }
-  }
-
-
-  Event pop(){
-    Event *toBeReturned;
-    if (head != NULL) {
-      toBeReturned = head->data;
-      if (size >0) {
-        size--;
-      }
-
-      if(head->next != NULL || head != NULL){
-        head = head->next;
-      }
-      return *toBeReturned;
-    } else {
-      toBeReturned = NULL;
-      return *toBeReturned;
-    }
-  }
-
-  bool isempty(){
-    if(head == NULL){
-      return true;
-    } else return false;
-  }
-  bool isfull(){
-    if (head != NULL) {
-      return true;
-    } else return false;
-  }
-
-  void printQ(){
-    cout << "The printed Que is ";
-    if (head != NULL) {
-      Node current = head;
-      cout << current->data->time << " ";
-      while(current->next != NULL){
-        current = current->next;
-        cout << current->data->time << " ";
-      }
-    } else {
-      cout << "it's empty"<< endl;
-    }
-    cout << endl;
-  }
-
-  Event begin(){
-    return *head->data;
-  }
-
-  Event end(){
-    return *tail->data;
-  }
-
-
-};
 
 
 
@@ -180,7 +68,7 @@ private:
 public:
   int responseTimes = 0;
   int totalOperation = 0;
-  int totalTimeComponentIsBusy = 0;
+  float totalTimeComponentIsBusy = 0;
   Component(int minTime, int maxTime, int eventType, string name){
     this->minTime = minTime;
     this->maxTime = maxTime;
@@ -286,7 +174,9 @@ void findExitProbability(Event *event, vector<Event> *priorityQ, int tick){
 void sendToDisk(Event *event, vector<Event> *diskQ1, vector<Event> *diskQ2){
   //cout << "sending to disk" << endl;
   if(diskQ1->size()<diskQ2->size()){
+    cout << endl;
     diskQ1->push_back(*event);
+    
     totalItemAddedInDiskQ1++;
   } else {
     diskQ2->push_back(*event);
@@ -302,7 +192,6 @@ int main(){
   ofstream file;
   file.open ("stats.txt");
 
-  cout << " vavavavav " << atoi(getValue("configuration.txt","INIT_TIME",0,1));
 
   //readFile();
 
@@ -330,8 +219,9 @@ int main(){
   int tick = INIT_TIME; //simulation clock
   while(!priorityQ.empty() && tick < FIN_TIME){
 
+    cout << " Disk1 size " << diskQ1.size() << endl;
+    cout << "Disk2 size "<<diskQ2.size() << endl;
     
-
     //measuring the job creating time randomly
     int jobCreationTime = rand()%ARRIVE_MAX-ARRIVE_MIN + ARRIVE_MIN + tick;
     
@@ -391,8 +281,6 @@ int main(){
   }
 
 
-  readFile();
-
   cout << endl
    << "============= Stats ===============" << endl
    << "Total time ran: " << FIN_TIME - INIT_TIME << " units" << endl
@@ -409,7 +297,7 @@ int main(){
   
    << "========== Disk1 Stats ============" << endl
    << "Total time disk1 is busy doing task: " << disk1->totalTimeComponentIsBusy << " units " << endl
-   << "Average time disk1 is busy doing task: " << disk1->totalTimeComponentIsBusy/FIN_TIME-INIT_TIME << " units " << endl
+   << "Average time disk1 is busy doing task: " << (disk1->totalTimeComponentIsBusy/(FIN_TIME-INIT_TIME)) << " units " << endl
    << "Total jobs completed by disk1: " << disk1->totalOperation << endl
    << "Job processing average in disk1: " << disk1->totalOperation/totalItemAddedInDiskQ1 << endl
    << "Average disk1 queue size: " << totalItemAddedInDiskQ1 << endl
@@ -418,7 +306,7 @@ int main(){
    << endl
    << "========== Disk2 Stats ============" << endl
    << "Total time disk2 is busy doing task: " << disk2->totalTimeComponentIsBusy << " units "<< endl
-   << "Average time disk2 is busy doing task: " << disk2->totalTimeComponentIsBusy/FIN_TIME-INIT_TIME << " units " << endl
+   << "Average time disk2 is busy doing task: " << (disk2->totalTimeComponentIsBusy/(FIN_TIME-INIT_TIME)) << " units " << endl
    << "Total jobs completed by disk2: " << disk2->totalOperation << endl
    << "Job processing average in disk2: " << disk2->totalOperation/totalItemAddedInDiskQ2 << endl
    << "Average disk2 queue size: " << totalItemAddedInDiskQ2 << endl
@@ -427,7 +315,7 @@ int main(){
    << endl
    << "=========== CPU Stats =============" << endl
    << "Total time Cpu is busy doing task: " << cpu->totalTimeComponentIsBusy << " units " << endl
-   << "Average time disk1 is busy doing task: " << cpu->totalTimeComponentIsBusy/FIN_TIME-INIT_TIME << " units " << endl
+   << "Average time disk1 is busy doing task: " << (cpu->totalTimeComponentIsBusy/(FIN_TIME-INIT_TIME)) << " units " << endl
    << "Total jobs completed by the CPU: " << cpu->totalOperation << endl
    << "Job processing average in disk2: " << cpu->totalOperation/totalItemAddedInCpuQ << endl
    << "Average cpu queue size: " << totalItemAddedInCpuQ << endl
